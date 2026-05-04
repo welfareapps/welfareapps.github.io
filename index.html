@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shabad Sewa</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+           max-width: 800px; margin: 0 auto; padding: 16px; background: #f9f9f9; color: #222; }
+    h1   { font-size: 1.4rem; margin-bottom: 4px; }
+    .updated { font-size: 0.8rem; color: #666; margin-bottom: 24px; }
+    .group-header { background: #1a73e8; color: #fff; padding: 8px 14px;
+                    border-radius: 6px; font-weight: 600; margin-top: 24px; }
+    .item  { background: #fff; border: 1px solid #e0e0e0; border-radius: 6px;
+             padding: 10px 14px; margin-top: 8px; }
+    .col-a { font-weight: 500; font-size: 1rem; }
+    .col-b { font-size: 0.85rem; color: #555; margin-top: 2px; }
+    .col-c { font-size: 0.85rem; color: #555; }
+    #loading { color: #888; padding: 32px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Shabad Sewa</h1>
+  <div class="updated" id="updated"></div>
+  <div id="loading">Loading data...</div>
+  <div id="content"></div>
+  <script>
+    // ── CONFIGURE THESE to match your column names ──
+    const GROUP_BY   = "Granth";     // column used for grouping
+    const SORT_BY    = "ShabadNumber";         // column used for sorting within group
+    const DISPLAY_A  = "ShabadNumber";         // primary label on each card
+    const DISPLAY_B  = "Shabad";  // second line on each card
+    const DISPLAY_C  = "DaysLeft";      // third line on each card
+    // ──────────────────────────────────────────────────────────
+
+    fetch('data.json')
+      .then(r => r.json())
+      .then(json => {
+        document.getElementById('loading').remove();
+        if (json.updated) {
+          document.getElementById('updated').textContent = 'Last updated: ' + json.updated;
+        }
+        const records = json.records || json;
+        const groups = {};
+        records.forEach(r => {
+          const g = r[GROUP_BY] || 'Other';
+          if (!groups[g]) groups[g] = [];
+          groups[g].push(r);
+        });
+        Object.keys(groups).sort().forEach(g => {
+          const items = groups[g].sort((a,b) => (a[SORT_BY]||'').localeCompare(b[SORT_BY]||''));
+          const html = `<div class="group-header">${g}</div>` +
+            items.map(r => `<div class="item">
+              <div class="col-a">${r[DISPLAY_A] || ''}</div>
+              <div class="col-b">${r[DISPLAY_B] || ''}</div>
+              <div class="col-c">${r[DISPLAY_C] || ''}</div>
+            </div>`).join('');
+          document.getElementById('content').insertAdjacentHTML('beforeend', html);
+        });
+      })
+      .catch(() => {
+        document.getElementById('loading').textContent = 'Data not yet available.';
+      });
+  </script>
+</body>
+</html>
